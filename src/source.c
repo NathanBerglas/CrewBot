@@ -42,7 +42,7 @@ int main(void) {
 
     // Shuffle deck
     shuffle(deck, SUITS*CARDS_PER_SUIT + TRUMPS);
- 
+
     // Round Starter
     int starting_player = -1;
 
@@ -55,7 +55,21 @@ int main(void) {
                 DEBUG_PRINT("Player %d is Captain.\n", p+1);
             }
         }
+        #ifndef SKIPSORT
+            sort_hand(players[p]);
+        #endif
     }
+
+    // Print player's hands
+    #ifdef VERBOSE
+        for(int p = 0; p < PLAYER_COUNT; p++) {
+            printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPlayer: %d\n - ", p+1);
+            for(int c = 0; c < HAND_SIZE - 1; c++) {
+                printf(" %d, ", players[p][c]->deckid);
+            }
+            printf(" %d\n", players[p][HAND_SIZE-1]->deckid);
+        }
+    #endif
 
     // Game loop
     for(int t = 0; t < HAND_SIZE; t++) {
@@ -71,20 +85,6 @@ int main(void) {
     }
     free(players);
     free(deck);
-}
-
-// shuffle(struct card[], int len) - Shuffles an array of cards
-//  arr - An array of len len 
-void shuffle(struct card *arr, int len) {
-    assert(arr != NULL);
-    srand(time(NULL)); // Generates Random Seed
-    for (int i = 0; i < len; i++) {
-        int j = rand() % (i + 1); // Pick a random index from 0 to i
-        // Swap arr[i] and arr[j]
-        struct card temp = arr[i];
-        arr[i] = arr[j];
-        arr[j] = temp;
-    }
 }
 
 // Plays a trick

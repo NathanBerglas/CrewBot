@@ -37,5 +37,7 @@ struct task {
 
 // Functions
 void copy_card(struct card *src, struct card *cp);
+void shuffle(struct card *arr, int len);
+void sort_hand(struct card** hand);
 
 #endif
