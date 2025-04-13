@@ -2,7 +2,7 @@ EXEC = bin/CrewBot.exe
 CC = clang
 DEF = "-DNODEF"
 OPT = -O0
-CFLAGS = -fdiagnostics-color=always -fansi-escape-codes -g -std=c17 -Wall -Werror -I include/ -MMD ${OPT} ${DEF} -DVERBOSE
+CFLAGS = -fdiagnostics-color=always -fansi-escape-codes -g -std=c17 -Wall -Werror -I include/ -MMD ${OPT} ${DEF} -DVERBOSE -DSKIPSORT
 LIB = $(wildcard lib/*.o)
 SRC = $(wildcard src/*.c)
 OBJECTS = $(SRC:src/%.c=bin/%.o)

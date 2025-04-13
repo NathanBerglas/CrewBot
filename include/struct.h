@@ -16,6 +16,7 @@
 #define TRUMPS 4 // 1-4
 #define PLAYER_COUNT 5
 #define HAND_SIZE 8 // Assuming 5 players
+#define TASK_COUNT 1 // 1-36 tasks
 
 // Structures
 
@@ -31,13 +32,14 @@ struct card {
 //task - A card that is required to be won
 struct task {
     int owner; // 1 to PLAYER_COUNT
-    struct card target;
+    int cardDeckid; // deckid 
     bool complete;
 };
 
 // Functions
 void copy_card(struct card *src, struct card *cp);
-void shuffle(struct card *arr, int len);
+void shuffle_cards(struct card *arr, int len);
+void shuffle_ints(int *arr, int len);
 void sort_hand(struct card** hand);
 
 #endif

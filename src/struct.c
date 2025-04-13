@@ -20,15 +20,29 @@ void copy_card(struct card *src, struct card *cp) {
     cp->played = src->played;
 }
 
-// shuffle(struct card[], int len) - Shuffles an array of cards
+// shuffle_cards(struct card[], int len) - Shuffles an array of cards
 //  arr - An array of len len 
-void shuffle(struct card *arr, int len) {
+void shuffle_cards(struct card *arr, int len) {
     assert(arr != NULL);
     srand(time(NULL)); // Generates Random Seed
     for (int i = 0; i < len; i++) {
         int j = rand() % (i + 1); // Pick a random index from 0 to i
         // Swap arr[i] and arr[j]
         struct card temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+}
+
+// shuffle_ints(struct card[], int len) - Shuffles an array of ints
+//  arr - An array of len len 
+void shuffle_ints(int *arr, int len) {
+    assert(arr != NULL);
+    srand(time(NULL)); // Generates Random Seed
+    for (int i = 0; i < len; i++) {
+        int j = rand() % (i + 1); // Pick a random index from 0 to i
+        // Swap arr[i] and arr[j]
+        int temp = arr[i];
         arr[i] = arr[j];
         arr[j] = temp;
     }

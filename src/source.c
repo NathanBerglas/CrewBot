@@ -41,7 +41,7 @@ int main(void) {
     }
 
     // Shuffle deck
-    shuffle(deck, SUITS*CARDS_PER_SUIT + TRUMPS);
+    shuffle_cards(deck, SUITS*CARDS_PER_SUIT + TRUMPS);
 
     // Round Starter
     int starting_player = -1;
@@ -52,7 +52,7 @@ int main(void) {
             players[p][c] = &deck[p * HAND_SIZE + c]; // Player[p][c] is a pointer to the card they received in the deck
             if (players[p][c]->deckid == (SUITS + 1) * 10 + TRUMPS) { // Highest card in the game denotes who starts first (Captain)
                 starting_player = p;
-                DEBUG_PRINT("Player %d is Captain.\n", p+1);
+                DEBUG_PRINT("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPlayer %d is Captain.\n", p+1);
             }
         }
         #ifndef SKIPSORT
@@ -62,8 +62,9 @@ int main(void) {
 
     // Print player's hands
     #ifdef VERBOSE
+        DEBUG_PRINT("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
         for(int p = 0; p < PLAYER_COUNT; p++) {
-            printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nPlayer: %d\n - ", p+1);
+            printf("Player: %d\n - ", p+1);
             for(int c = 0; c < HAND_SIZE - 1; c++) {
                 printf(" %d, ", players[p][c]->deckid);
             }
@@ -71,26 +72,61 @@ int main(void) {
         }
     #endif
 
+    // Assign tasks
+    struct task* tasks = malloc(sizeof(struct task) * TASK_COUNT);
+    DEBUG_PRINT("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    {   int ids[CARDS_PER_SUIT*SUITS];
+        int i = 0;
+        int p = starting_player;
+        for (int c = 11; c <= (SUITS * 10) + CARDS_PER_SUIT; c++) {
+           if (c % 10 == 0) c++;
+           ids[i] = c;
+           i++;
+        }
+        shuffle_ints(ids, CARDS_PER_SUIT*SUITS);
+        for(int t = 0; t < TASK_COUNT; t++) {
+            srand(time(NULL));
+            tasks[t].cardDeckid = ids[t];
+            tasks[t].owner = p;
+            tasks[t].complete = false;
+            DEBUG_PRINT("Task %d: Card: %d, Player %d\n", t+1, tasks[t].cardDeckid, p+1);
+            p = (p+1) % PLAYER_COUNT;
+        }
+    }
+    DEBUG_PRINT("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+    
     // Game loop
     for(int t = 0; t < HAND_SIZE; t++) {
         DEBUG_PRINT("ROUND %d BEGINS: Player %d starts.\n", t+1, starting_player+1);
-         // Players decays from a 2d array of pointers to a pointer
+        // Players decays from a 2d array of pointers to a pointer
         communicate(players); // Players are given a chance to communicate a card once per game
-        starting_player = trick(players, starting_player); // The person who starts the game is the one who won the last
+        starting_player = trick(players, starting_player, tasks); // The person who starts the game is the one who won the last
     }
-
+    int tasks_complete = 0;
+    bool win = false;
+    for(int t = 0; t < TASK_COUNT; t++) {
+        if (tasks[t].complete) tasks_complete++;
+        else DEBUG_PRINT("Failed task! --> Task %d: Card: %d, Player %d\n", t+1, tasks[t].cardDeckid, tasks[t].owner + 1);
+    }
+    if (tasks_complete == TASK_COUNT) {
+        win = true;
+        DEBUG_PRINT("\nYou win!!\n");
+    } else {
+        DEBUG_PRINT("\nYou lose :(\n");        
+    }
     // Free memory
     for (int p = 0; p < PLAYER_COUNT; p++) {
         free(players[p]);
     }
     free(players);
     free(deck);
+    return win;
 }
 
 // Plays a trick
 // players - An array of player's hands which are arrays of pointers to cards in the deck (len hand_size)
 // starting_player - An int which decrees which player begins the trick
-int trick(struct card ***players, int starting_player) {
+int trick(struct card ***players, int starting_player, struct task *tasks) {
     assert(players);
     assert(starting_player < PLAYER_COUNT && starting_player >= 0);
     struct card **played = malloc(sizeof(struct card*) * PLAYER_COUNT); // Cards played this trick - an array of pointers to cards in deck - in player order 
@@ -115,7 +151,7 @@ int trick(struct card ***players, int starting_player) {
         free(playable_cards);
     }
 
-    int winner_index = winner(played, starting_player);
+    int winner_index = winner(played, starting_player, tasks);
     assert(winner_index < PLAYER_COUNT && winner_index >= 0);
     free(played);
     return winner_index; // Frees played
@@ -162,7 +198,7 @@ int playable(struct card **playable_cards,  struct card *first, struct card **ha
 
 // Returns which player won the trick
 //      played - an array (len players) of pointers to cards in deck - in player order 
-int winner(struct card **played, int starting_player) {
+int winner(struct card **played, int starting_player, struct task *tasks) {
     assert(played != NULL);
     assert(starting_player < PLAYER_COUNT && starting_player >= 0);
     struct card max_card;
@@ -177,6 +213,18 @@ int winner(struct card **played, int starting_player) {
             winning_player = p;
         }
     }
+    // Check if a task was won
+    for(int t = 0; t < TASK_COUNT; t++) {
+        if(tasks[t].owner == winning_player) {
+            for(int c = 0; c < PLAYER_COUNT; c++) {
+                if (tasks[t].cardDeckid == played[c]->deckid) {
+                    tasks[t].complete = true; // Set task as complete
+                    DEBUG_PRINT("Task %d complete! - Card: %d, Player %d\n", t+1, tasks[t].cardDeckid, tasks[t].owner + 1);
+                }
+            }
+        }
+    }
+
     DEBUG_PRINT("Player %d wins the round with the card %d.\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n", winning_player+1, max_card.deckid);
     return winning_player;
 }
