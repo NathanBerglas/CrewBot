@@ -10,6 +10,7 @@
 // Headers
 #include "source.h"
 #include "bot.h"
+#include "debug.h"
 
 // Global Variables
 
@@ -51,12 +52,14 @@ int main(void) {
             players[p][c] = &deck[p * HAND_SIZE + c]; // Player[p][c] is a pointer to the card they received in the deck
             if (players[p][c]->deckid == (SUITS + 1) * 10 + TRUMPS) { // Highest card in the game denotes who starts first (Captain)
                 starting_player = p;
+                DEBUG_PRINT("Player %d is Captain.\n", p+1);
             }
         }
     }
 
     // Game loop
     for(int t = 0; t < HAND_SIZE; t++) {
+        DEBUG_PRINT("ROUND %d BEGINS: Player %d starts.\n", t+1, starting_player+1);
          // Players decays from a 2d array of pointers to a pointer
         communicate(players); // Players are given a chance to communicate a card once per game
         starting_player = trick(players, starting_player); // The person who starts the game is the one who won the last
@@ -106,8 +109,8 @@ int trick(struct card ***players, int starting_player) {
         assert(played_index < playable_len && played_index >= 0);
         played[p] = playable_cards[played_index]; // Player plays a card
         played[p]->played = true;
+        DEBUG_PRINT("Player %d plays card %d.\n", p+1, played[p]->deckid);
         p = (p + 1) % PLAYER_COUNT;
-
         
         free(playable_cards);
     }
@@ -174,5 +177,6 @@ int winner(struct card **played, int starting_player) {
             winning_player = p;
         }
     }
+    DEBUG_PRINT("Player %d wins the round with the card %d.\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n", winning_player+1, max_card.deckid);
     return winning_player;
 }
