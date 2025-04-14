@@ -14,8 +14,22 @@
 
 // Global Variables
 
-// main(void) - Initializes the game and runs the game loop
+// main(void)
 int main(void) {
+    srand(time(NULL));
+    int wins = 0;
+    int losses = 0;
+    bool game = false;
+    for (int g = 0; g < 1; g++) {
+        game = play_game();
+        if (game){ wins++; }
+        else losses++;
+    }
+    printf("Wins: %d, Losses: %d\n", wins, losses);
+}
+
+// play_game - Plays a game of crew and returns 1 if win, 0 if loss
+bool play_game() {
     // Declare deck and players hands
     struct card *deck = malloc(sizeof(struct card) * (SUITS*CARDS_PER_SUIT + TRUMPS)); // An array of cards in deck order (len deck size)
     struct card ***players= malloc(PLAYER_COUNT * sizeof(struct card*) * HAND_SIZE); // An array of player's hands which are arrays of pointers to cards in the deck (len hand_size)
@@ -85,7 +99,6 @@ int main(void) {
         }
         shuffle_ints(ids, CARDS_PER_SUIT*SUITS);
         for(int t = 0; t < TASK_COUNT; t++) {
-            srand(time(NULL));
             tasks[t].cardDeckid = ids[t];
             tasks[t].owner = p;
             tasks[t].complete = false;
@@ -118,6 +131,7 @@ int main(void) {
     for (int p = 0; p < PLAYER_COUNT; p++) {
         free(players[p]);
     }
+    free(tasks);
     free(players);
     free(deck);
     return win;

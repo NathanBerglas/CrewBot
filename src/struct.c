@@ -24,7 +24,6 @@ void copy_card(struct card *src, struct card *cp) {
 //  arr - An array of len len 
 void shuffle_cards(struct card *arr, int len) {
     assert(arr != NULL);
-    srand(time(NULL)); // Generates Random Seed
     for (int i = 0; i < len; i++) {
         int j = rand() % (i + 1); // Pick a random index from 0 to i
         // Swap arr[i] and arr[j]
@@ -38,7 +37,6 @@ void shuffle_cards(struct card *arr, int len) {
 //  arr - An array of len len 
 void shuffle_ints(int *arr, int len) {
     assert(arr != NULL);
-    srand(time(NULL)); // Generates Random Seed
     for (int i = 0; i < len; i++) {
         int j = rand() % (i + 1); // Pick a random index from 0 to i
         // Swap arr[i] and arr[j]

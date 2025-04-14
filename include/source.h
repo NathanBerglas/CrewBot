@@ -11,6 +11,7 @@
 #include "struct.h"
 
 // Functions
+bool play_game();
 void communicate(struct card ***players);
 int trick(struct card ***players, int starting_player, struct task *tasks);
 int playable(struct card **playable_cards, struct card *first, struct card **hand);
