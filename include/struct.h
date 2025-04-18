@@ -16,7 +16,7 @@
 #define TRUMPS 4 // 1-4
 #define PLAYER_COUNT 5
 #define HAND_SIZE 8 // Assuming 5 players
-#define TASK_COUNT 1 // 1-36 tasks
+#define TASK_COUNT 10 // 1-36 tasks
 
 // Structures
 
@@ -34,6 +34,15 @@ struct task {
     int owner; // 1 to PLAYER_COUNT
     int cardDeckid; // deckid 
     bool complete;
+};
+
+//information - Information necessary to make gameplay decisions that is passed to the player
+struct information {
+    struct card **played; // Array of cards that have been played this trick
+    int played_len;
+    struct card **hand; // Array of cards len HAND_CARDS in your hand
+    struct task *tasks; // Array of tasks
+    struct card **commed; // Array of cards len PLAYER_COUNT that have been communicated
 };
 
 // Functions

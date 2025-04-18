@@ -13,6 +13,7 @@
 #include "debug.h"
 
 // Global Variables
+struct card null_card = {.suit = 0, .number = 0, .deckid = 0, .played = false};
 
 // main(void)
 int main(void) {
@@ -89,7 +90,7 @@ bool play_game() {
     // Assign tasks
     struct task* tasks = malloc(sizeof(struct task) * TASK_COUNT);
     DEBUG_PRINT("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-    {   int ids[CARDS_PER_SUIT*SUITS];
+    {   int *ids = malloc(sizeof(int) * CARDS_PER_SUIT*SUITS);
         int i = 0;
         int p = starting_player;
         for (int c = 11; c <= (SUITS * 10) + CARDS_PER_SUIT; c++) {
@@ -99,12 +100,17 @@ bool play_game() {
         }
         shuffle_ints(ids, CARDS_PER_SUIT*SUITS);
         for(int t = 0; t < TASK_COUNT; t++) {
-            tasks[t].cardDeckid = ids[t];
+            struct information info = {.played = NULL, .played_len = 0, .hand = players[p], .tasks = tasks, .commed=NULL};
+            int claimed = claim_task(&ids, TASK_COUNT-t, &info);
+            assert(claimed >= 0 && claimed < TASK_COUNT-t);
+            tasks[t].cardDeckid = ids[claimed];
             tasks[t].owner = p;
             tasks[t].complete = false;
-            DEBUG_PRINT("Task %d: Card: %d, Player %d\n", t+1, tasks[t].cardDeckid, p+1);
+            ids[claimed] = ids[TASK_COUNT-t-1]; // Swap claimed task with the last task in the array, and length is shortened by one (Refreshes ids to be unclaimed tasks)
+            DEBUG_PRINT("Task %d is claimed: Card: %d, Player %d\n", t+1, tasks[t].cardDeckid, p+1);
             p = (p+1) % PLAYER_COUNT;
         }
+        free(ids);
     }
     DEBUG_PRINT("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     
@@ -112,7 +118,7 @@ bool play_game() {
     for(int t = 0; t < HAND_SIZE; t++) {
         DEBUG_PRINT("ROUND %d BEGINS: Player %d starts.\n", t+1, starting_player+1);
         // Players decays from a 2d array of pointers to a pointer
-        communicate(players); // Players are given a chance to communicate a card once per game
+        //communicate(players); // Players are given a chance to communicate a card once per game
         starting_player = trick(players, starting_player, tasks); // The person who starts the game is the one who won the last
     }
     int tasks_complete = 0;
@@ -155,7 +161,8 @@ int trick(struct card ***players, int starting_player, struct task *tasks) {
         int playable_len = playable(playable_cards, &first, players[p]); // The len of array playable_cards
         assert(playable_cards[0] != NULL); // That at least one card is playable from playable_cards
         assert(playable_len <= HAND_SIZE && playable_len > 0);
-        int played_index = play_card(playable_cards, playable_len, played, i, players[p]); // An int that is the index of playable_cards that the bot wishes to play
+        struct information info = {.played = played, .played_len = i, .hand = players[p], .tasks = tasks, .commed=NULL};
+        int played_index = play_card(playable_cards, playable_len, &info); // An int that is the index of playable_cards that the bot wishes to play
         assert(played_index < playable_len && played_index >= 0);
         played[p] = playable_cards[played_index]; // Player plays a card
         played[p]->played = true;
@@ -171,9 +178,15 @@ int trick(struct card ***players, int starting_player, struct task *tasks) {
     return winner_index; // Frees played
 }
 
-// Player communicates a card
-// r_playes - a pointer to a 2d array
-void communicate(struct card ***players) {}
+// Modifies ids to include only communicatable cards and returns the number of communicatable cards
+//      ids - a blank array (len hand) of deckids that are communicatable - in hand order
+//      first - a card
+//      played_len - the length of cards that have been played
+//      hand - an array (len hand) of pointers to cards in deck - in hand order
+int communicatable(int **ids) {
+        //struct information info = {.played = NULL, .played_len = 0, .hand = players[p], .tasks = tasks, .commed=NULL};
+        return 0;
+}
 
 // Modifies playable_cards to include only playable cards and returns the number of playable cards
 //      playable_cards - a blank array (len hand) of pointers to cards in the hand - in hand order
