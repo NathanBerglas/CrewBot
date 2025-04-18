@@ -20,6 +20,14 @@ void copy_card(struct card *src, struct card *cp) {
     cp->played = src->played;
 }
 
+// copy_communicatino(struct communication *src, struct communication *cp) - Copies values of src to cp
+void copy_communication(struct communication *src, struct communication *cp) {
+    cp->cardDeckid = src->cardDeckid;
+    cp->owner = src->owner;
+    cp->played = src->played;
+    cp->pos = src->pos;
+}
+
 // shuffle_cards(struct card[], int len) - Shuffles an array of cards
 //  arr - An array of len len 
 void shuffle_cards(struct card *arr, int len) {

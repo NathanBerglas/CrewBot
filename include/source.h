@@ -12,7 +12,8 @@
 
 // Functions
 bool play_game();
-void communicate(struct card ***players);
+void communicate(struct card ***players, struct communication *communicated, struct task *tasks);
+int communicatable_cards();
 int trick(struct card ***players, int starting_player, struct task *tasks);
 int playable(struct card **playable_cards, struct card *first, struct card **hand);
 int winner(struct card **played, int starting_player, struct task *tasks);

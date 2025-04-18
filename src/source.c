@@ -88,7 +88,7 @@ bool play_game() {
     #endif
 
     // Assign tasks
-    struct task* tasks = malloc(sizeof(struct task) * TASK_COUNT);
+    struct task *tasks = malloc(sizeof(struct task) * TASK_COUNT);
     DEBUG_PRINT("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     {   int *ids = malloc(sizeof(int) * CARDS_PER_SUIT*SUITS);
         int i = 0;
@@ -114,11 +114,15 @@ bool play_game() {
     }
     DEBUG_PRINT("\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     
+    struct communication *communicated_cards = malloc(sizeof(struct communication) * PLAYER_COUNT);
+    for (int c = 0; c < PLAYER_COUNT; c++) {
+        communicated_cards->cardDeckid = 0; // Initialize cardDeckid for communicate function to know to skip or not
+    }
     // Game loop
     for(int t = 0; t < HAND_SIZE; t++) {
         DEBUG_PRINT("ROUND %d BEGINS: Player %d starts.\n", t+1, starting_player+1);
         // Players decays from a 2d array of pointers to a pointer
-        //communicate(players); // Players are given a chance to communicate a card once per game
+        communicate(players, communicated_cards, tasks); // Players are given a chance to communicate a card once per game
         starting_player = trick(players, starting_player, tasks); // The person who starts the game is the one who won the last
     }
     int tasks_complete = 0;
@@ -141,6 +145,29 @@ bool play_game() {
     free(players);
     free(deck);
     return win;
+}
+
+// Gives each player a chance to communicate a card
+// players - An array of player's hands which are arrays of pointers to cards in the deck (len hand_size)
+// communicated - An array of communications that are previously communicated cards
+// tasks - An array of tasks (len TASK_COUNT) that have been assigned to players
+void communicate(struct card ***players, struct communication *communicated, struct task *tasks) {
+    assert(players);
+    assert(communicated);
+    assert(tasks);
+    for (int p = 0; p < PLAYER_COUNT; p++) {
+        if (communicated[p].cardDeckid != 0) break; // A player can only communicate once per game!
+        struct communication com = { .cardDeckid = 0, .owner = p, .pos = -1, .played = 0};
+        struct information info = {.commed = communicated, .hand = players[p], .played = NULL, .played_len = 0, .tasks = tasks};
+        int *ids = malloc(sizeof(int) * HAND_SIZE);
+        int commable_len = 0;
+        commable_len = communicatable_cards(ids, players[p]);
+        com.cardDeckid = communicate_card(ids, commable_len, &info);
+        if (com.cardDeckid >= 0 && com.cardDeckid < commable_len) {
+            copy_communication(&com, &communicated[p]);
+        }
+        free(ids);
+    }
 }
 
 // Plays a trick
@@ -180,12 +207,10 @@ int trick(struct card ***players, int starting_player, struct task *tasks) {
 
 // Modifies ids to include only communicatable cards and returns the number of communicatable cards
 //      ids - a blank array (len hand) of deckids that are communicatable - in hand order
-//      first - a card
-//      played_len - the length of cards that have been played
 //      hand - an array (len hand) of pointers to cards in deck - in hand order
-int communicatable(int **ids) {
-        //struct information info = {.played = NULL, .played_len = 0, .hand = players[p], .tasks = tasks, .commed=NULL};
-        return 0;
+int communicatable_cards(int *ids, struct card **hand) {
+        
+    return 0;
 }
 
 // Modifies playable_cards to include only playable cards and returns the number of playable cards

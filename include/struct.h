@@ -36,17 +36,25 @@ struct task {
     bool complete;
 };
 
+struct communication {
+    int cardDeckid; // deckid
+    int owner; // 1 to PLAYER_COUNT
+    int pos; // 0 is only, 1 is minimum card, 2 is maximum card
+    bool played;
+};
+
 //information - Information necessary to make gameplay decisions that is passed to the player
 struct information {
     struct card **played; // Array of cards that have been played this trick
     int played_len;
     struct card **hand; // Array of cards len HAND_CARDS in your hand
     struct task *tasks; // Array of tasks
-    struct card **commed; // Array of cards len PLAYER_COUNT that have been communicated
+    struct communication *commed; // Array of communications len PLAYER_COUNT that have been communicated
 };
 
 // Functions
 void copy_card(struct card *src, struct card *cp);
+void copy_communication(struct communication *src, struct communication *cp);
 void shuffle_cards(struct card *arr, int len);
 void shuffle_ints(int *arr, int len);
 void sort_hand(struct card** hand);
