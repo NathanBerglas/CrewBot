@@ -141,6 +141,7 @@ bool play_game() {
     for (int p = 0; p < PLAYER_COUNT; p++) {
         free(players[p]);
     }
+    free(communicated_cards);
     free(tasks);
     free(players);
     free(deck);
@@ -156,17 +157,27 @@ void communicate(struct card ***players, struct communication *communicated, str
     assert(communicated);
     assert(tasks);
     for (int p = 0; p < PLAYER_COUNT; p++) {
-        if (communicated[p].cardDeckid != 0) break; // A player can only communicate once per game!
-        struct communication com = { .cardDeckid = 0, .owner = p, .pos = -1, .played = 0};
+        if (communicated[p].cardDeckid != 0) continue; // A player can only communicate once per game!
         struct information info = {.commed = communicated, .hand = players[p], .played = NULL, .played_len = 0, .tasks = tasks};
-        int *ids = malloc(sizeof(int) * HAND_SIZE);
-        int commable_len = 0;
-        commable_len = communicatable_cards(ids, players[p]);
-        com.cardDeckid = communicate_card(ids, commable_len, &info);
-        if (com.cardDeckid >= 0 && com.cardDeckid < commable_len) {
-            copy_communication(&com, &communicated[p]);
+        struct communication *possible_coms = malloc(sizeof(struct communication) * HAND_SIZE);
+
+        for(int c = 0; c < HAND_SIZE; c++) {
+            possible_coms[c].owner = p;
+            possible_coms[c].played = false;
         }
-        free(ids);
+
+        int commable_len = communicatable_cards(possible_coms, players[p]);
+        assert(commable_len >= 0 && commable_len <= HAND_SIZE);
+
+        int comID = communicate_card(possible_coms, commable_len, &info);
+        assert(comID == -1 || (comID >= 0 && comID < commable_len));
+
+        if (comID != -1) {
+            copy_communication(&possible_coms[comID], &communicated[p]);
+            DEBUG_PRINT("Player %d communicates card: %d in position %d!\n", p+1, communicated[p].cardDeckid, communicated[p].pos);
+        }
+
+        free(possible_coms);
     }
 }
 
@@ -188,14 +199,18 @@ int trick(struct card ***players, int starting_player, struct task *tasks) {
         int playable_len = playable(playable_cards, &first, players[p]); // The len of array playable_cards
         assert(playable_cards[0] != NULL); // That at least one card is playable from playable_cards
         assert(playable_len <= HAND_SIZE && playable_len > 0);
+
         struct information info = {.played = played, .played_len = i, .hand = players[p], .tasks = tasks, .commed=NULL};
+
         int played_index = play_card(playable_cards, playable_len, &info); // An int that is the index of playable_cards that the bot wishes to play
         assert(played_index < playable_len && played_index >= 0);
+
         played[p] = playable_cards[played_index]; // Player plays a card
         played[p]->played = true;
+
         DEBUG_PRINT("Player %d plays card %d.\n", p+1, played[p]->deckid);
+
         p = (p + 1) % PLAYER_COUNT;
-        
         free(playable_cards);
     }
 
@@ -205,12 +220,38 @@ int trick(struct card ***players, int starting_player, struct task *tasks) {
     return winner_index; // Frees played
 }
 
-// Modifies ids to include only communicatable cards and returns the number of communicatable cards
-//      ids - a blank array (len hand) of deckids that are communicatable - in hand order
+// Modifies possible_coms to include only communicatable cards and returns the number of communicatable cards
+//      possible_coms - a blank array (len hand) of communications that are communicatable - in hand order
 //      hand - an array (len hand) of pointers to cards in deck - in hand order
-int communicatable_cards(int *ids, struct card **hand) {
-        
-    return 0;
+int communicatable_cards(struct communication *possible_coms, struct card **hand) {
+    int cards[SUITS][CARDS_PER_SUIT] = {0};
+    int cardLens[SUITS] = {0};
+    int commed_len = 0;
+
+    for (int c = 0; c < HAND_SIZE; c++) {
+        if(hand[c]->played || hand[c]->suit == 5) continue; // If a card is played or is a rocket cannot communicate
+        int suitIndex = hand[c]->suit - 1;
+        cards[suitIndex][cardLens[suitIndex]++] = hand[c]->number; // Adds card to cards[suit] and increases cardLens[suit] by 1
+    }
+
+    for (int s = 0; s < SUITS; s++) {
+        if (cardLens[s] == 0) continue;
+        if (cardLens[s] == 1) {
+            possible_coms[commed_len++] = (struct communication){.cardDeckid = (s + 1) * 10 + cards[s][0], .pos = 0};
+        } else {
+            int min = cards[s][0], max = cards[s][0];
+            for (int c = 1; c < cardLens[s]; c++) {
+                if (cards[s][c] < min) min = cards[s][c];
+                if (cards[s][c] > max) max = cards[s][c];
+            }
+            assert(min != max);
+            assert(min < max);
+            possible_coms[commed_len++] = (struct communication){.cardDeckid = (s+1) * 10 + min, .pos = 1};
+            possible_coms[commed_len++] = (struct communication){.cardDeckid = (s+1) * 10 + max, .pos = 2};
+        }
+    }
+
+    return commed_len;
 }
 
 // Modifies playable_cards to include only playable cards and returns the number of playable cards

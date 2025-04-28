@@ -39,7 +39,7 @@ struct task {
 struct communication {
     int cardDeckid; // deckid
     int owner; // 1 to PLAYER_COUNT
-    int pos; // 0 is only, 1 is minimum card, 2 is maximum card
+    int pos; // 0 is only card of that suit, 1 is lowest, 2 is highest
     bool played;
 };
 

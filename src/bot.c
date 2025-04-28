@@ -14,7 +14,7 @@ int claim_task(int **claimable_tasks, int task_len, struct information *info) {
     return 0;
 }
 
-int communicate_card(int *communicatable_ids, int communicatable_len, struct information *info) {
+int communicate_card(struct communication *possible_coms, int communicatable_len, struct information *info) {
     return -1;
 }
 
