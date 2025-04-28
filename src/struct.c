@@ -62,6 +62,7 @@ static int compare_card(const void *a, const void *b) {
     if(cA->deckid < cB->deckid) return -1;
     return 0;
 }
+
 // Sorts a player's hand ascending by suit then number
 // hand - An array of len HAND_LENGTH of pointers to cards in deck - deck order -> hand order 
 void sort_hand(struct card** hand) {

@@ -15,22 +15,35 @@
 // Global Variables
 struct card null_card = {.suit = 0, .number = 0, .deckid = 0, .played = false};
 
+// Function Declarations
+static int play_game();
+static void communicate(struct card ***players, struct communication *communicated, struct task *tasks);
+static int trick(struct card ***players, int starting_player, struct task *tasks);
+static int communicatable(struct communication *possible_coms, struct card **hand);
+static int playable(struct card **playable_cards, struct card *first, struct card **hand);
+static int winner(struct card **played, int starting_player, struct task *tasks);
+
 // main(void)
 int main(void) {
     srand(time(NULL));
+    const int game_count = 1;
+
     int wins = 0;
     int losses = 0;
-    bool game = false;
-    for (int g = 0; g < 1; g++) {
-        game = play_game();
-        if (game){ wins++; }
+    int tasks_left = -1;
+    int total_missed_tasks = 0;
+    for (int g = 0; g < game_count; g++) {
+        tasks_left = play_game();
+        total_missed_tasks += tasks_left;
+        if (!tasks_left){ wins++; }
         else losses++;
     }
     printf("Wins: %d, Losses: %d\n", wins, losses);
+    printf("Tasks missed: %d, total tasks: %d\n", total_missed_tasks, game_count * TASK_COUNT);
 }
 
-// play_game - Plays a game of crew and returns 1 if win, 0 if loss
-bool play_game() {
+// play_game - Plays a game of crew and returns number of tasks incomplete - 0 being a win
+static int play_game() {
     // Declare deck and players hands
     struct card *deck = malloc(sizeof(struct card) * (SUITS*CARDS_PER_SUIT + TRUMPS)); // An array of cards in deck order (len deck size)
     struct card ***players= malloc(PLAYER_COUNT * sizeof(struct card*) * HAND_SIZE); // An array of player's hands which are arrays of pointers to cards in the deck (len hand_size)
@@ -126,13 +139,11 @@ bool play_game() {
         starting_player = trick(players, starting_player, tasks); // The person who starts the game is the one who won the last
     }
     int tasks_complete = 0;
-    bool win = false;
     for(int t = 0; t < TASK_COUNT; t++) {
         if (tasks[t].complete) tasks_complete++;
         else DEBUG_PRINT("Failed task! --> Task %d: Card: %d, Player %d\n", t+1, tasks[t].cardDeckid, tasks[t].owner + 1);
     }
     if (tasks_complete == TASK_COUNT) {
-        win = true;
         DEBUG_PRINT("\nYou win!!\n");
     } else {
         DEBUG_PRINT("\nYou lose :(\n");        
@@ -145,14 +156,14 @@ bool play_game() {
     free(tasks);
     free(players);
     free(deck);
-    return win;
+    return TASK_COUNT - tasks_complete;
 }
 
 // Gives each player a chance to communicate a card
 // players - An array of player's hands which are arrays of pointers to cards in the deck (len hand_size)
 // communicated - An array of communications that are previously communicated cards
 // tasks - An array of tasks (len TASK_COUNT) that have been assigned to players
-void communicate(struct card ***players, struct communication *communicated, struct task *tasks) {
+static void communicate(struct card ***players, struct communication *communicated, struct task *tasks) {
     assert(players);
     assert(communicated);
     assert(tasks);
@@ -166,7 +177,7 @@ void communicate(struct card ***players, struct communication *communicated, str
             possible_coms[c].played = false;
         }
 
-        int commable_len = communicatable_cards(possible_coms, players[p]);
+        int commable_len = communicatable(possible_coms, players[p]);
         assert(commable_len >= 0 && commable_len <= HAND_SIZE);
 
         int comID = communicate_card(possible_coms, commable_len, &info);
@@ -184,7 +195,7 @@ void communicate(struct card ***players, struct communication *communicated, str
 // Plays a trick
 // players - An array of player's hands which are arrays of pointers to cards in the deck (len hand_size)
 // starting_player - An int which decrees which player begins the trick
-int trick(struct card ***players, int starting_player, struct task *tasks) {
+static int trick(struct card ***players, int starting_player, struct task *tasks) {
     assert(players);
     assert(starting_player < PLAYER_COUNT && starting_player >= 0);
     struct card **played = malloc(sizeof(struct card*) * PLAYER_COUNT); // Cards played this trick - an array of pointers to cards in deck - in player order 
@@ -223,7 +234,7 @@ int trick(struct card ***players, int starting_player, struct task *tasks) {
 // Modifies possible_coms to include only communicatable cards and returns the number of communicatable cards
 //      possible_coms - a blank array (len hand) of communications that are communicatable - in hand order
 //      hand - an array (len hand) of pointers to cards in deck - in hand order
-int communicatable_cards(struct communication *possible_coms, struct card **hand) {
+static int communicatable(struct communication *possible_coms, struct card **hand) {
     int cards[SUITS][CARDS_PER_SUIT] = {0};
     int cardLens[SUITS] = {0};
     int commed_len = 0;
@@ -254,35 +265,33 @@ int communicatable_cards(struct communication *possible_coms, struct card **hand
     return commed_len;
 }
 
-// Modifies playable_cards to include only playable cards and returns the number of playable cards
-//      playable_cards - a blank array (len hand) of pointers to cards in the hand - in hand order
-//      first - a card
-//      played_len - the length of cards that have been played
+// Modifies possible_coms to include only playable cards and returns the number of playable cards
+//      possible_coms - a blank array (len hand) of pointers to cards in the hand - in hand order
 //      hand - an array (len hand) of pointers to cards in deck - in hand order
-int playable(struct card **playable_cards,  struct card *first, struct card **hand) {
+
+static int playable(struct card **playable_cards,  struct card *first, struct card **hand) {
     assert(playable_cards != NULL);
     assert(first != NULL);
     assert(hand != NULL);
 
     int playable_len = 0;
+
+    bool has_suits[SUITS + 1] = {0};
+    for (int c = 0; c < HAND_SIZE; c++) {
+        if (hand[c]->played) continue;
+        has_suits[hand[c]->suit - 1] = 1;
+    }
     
     for (int c = 0; c < HAND_SIZE; c++) {
         assert(hand[c]);
         if (hand[c]->played) { // If a card is played, it cannot be played again
         } else if (first->suit == 0) { // If this is the first card
-            playable_cards[playable_len] = hand[c];
-            playable_len++;
+            playable_cards[playable_len++] = hand[c];
         } else if (hand[c]->suit == first->suit) { // The card is the correct suit
-            playable_cards[playable_len] = hand[c];
-            playable_len++;
+            playable_cards[playable_len++] = hand[c];
         } else { // Check if you can discard this card by checking if player has other of this suit
-            bool has_suit = false;
-            for (int card = 0; card < HAND_SIZE; card++) {
-                has_suit = has_suit || (hand[card]->suit == first->suit && !hand[card]->played);
-            }
-            if (!has_suit) {
-                playable_cards[playable_len] = hand[c];
-                playable_len++;
+            if (!has_suits[first->suit - 1]) {
+                playable_cards[playable_len++] = hand[c];
             }
         }
     }
@@ -291,7 +300,7 @@ int playable(struct card **playable_cards,  struct card *first, struct card **ha
 
 // Returns which player won the trick
 //      played - an array (len players) of pointers to cards in deck - in player order 
-int winner(struct card **played, int starting_player, struct task *tasks) {
+static int winner(struct card **played, int starting_player, struct task *tasks) {
     assert(played != NULL);
     assert(starting_player < PLAYER_COUNT && starting_player >= 0);
     struct card max_card;

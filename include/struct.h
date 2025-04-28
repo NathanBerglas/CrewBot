@@ -16,7 +16,7 @@
 #define TRUMPS 4 // 1-4
 #define PLAYER_COUNT 5
 #define HAND_SIZE 8 // Assuming 5 players
-#define TASK_COUNT 10 // 1-36 tasks
+#define TASK_COUNT 5 // 1-36 tasks
 
 // Structures
 

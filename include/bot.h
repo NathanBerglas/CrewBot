@@ -11,13 +11,13 @@
 #include "struct.h"
 
 // Functions
-// claim_task - Returns index of claimable_tasks determining the task wished to be claimed
+// claim_task - returns the index of claimable_tasks that the bot wishes to claim
 int claim_task(int **claimable_tasks, int task_len, struct information *info);
 
-// communicate_card - Returns index of playable_cards determining the card wished to be played, -1 means no communication
+// communicate_card - returns the index of possible_coms that the bot wishes to communicate
 int communicate_card(struct communication *possible_coms, int communicatable_len, struct information *info);
 
-// play_card - Returns index of playable_cards determining the card wished to be played
+// play_card - returns the index of playable_cards that the bot wishes to play
 int play_card(struct card **playable_cards, int playable_len, struct information *info);
 
 #endif
