@@ -114,7 +114,7 @@ static int play_game() {
         shuffle_ints(ids, CARDS_PER_SUIT*SUITS);
         for(int t = 0; t < TASK_COUNT; t++) {
             struct information info = {.played = NULL, .played_len = 0, .hand = players[p], .tasks = tasks, .commed=NULL};
-            int claimed = claim_task(&ids, TASK_COUNT-t, &info);
+            int claimed = claim_task(ids, TASK_COUNT-t, &info);
             assert(claimed >= 0 && claimed < TASK_COUNT-t);
             tasks[t].cardDeckid = ids[claimed];
             tasks[t].owner = p;

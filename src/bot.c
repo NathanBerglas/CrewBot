@@ -12,7 +12,7 @@
 // claim_task:
 // This function returns the index of claimable_tasks that the bot wishes to claim
 // Requirements: claim_task must return an integer t >= 0, t < task_len
-int claim_task(int **claimable_tasks, int task_len, struct information *info) {
+int claim_task(int *claimable_task_ids, int task_len, struct information *info) {
     return 0;
 }
 

@@ -12,7 +12,7 @@
 
 // Functions
 // claim_task - returns the index of claimable_tasks that the bot wishes to claim
-int claim_task(int **claimable_tasks, int task_len, struct information *info);
+int claim_task(int *claimable_task_ids, int task_len, struct information *info);
 
 // communicate_card - returns the index of possible_coms that the bot wishes to communicate
 int communicate_card(struct communication *possible_coms, int communicatable_len, struct information *info);
