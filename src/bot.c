@@ -40,7 +40,7 @@ int claim_task(int *claimable_task_ids, int task_len, struct information *info) 
         if (info->hand[c]->deckid == (SUITS + 1) * 10 + TRUMPS) handStrength += captainBonus; // Bot is captain
         if (info->hand[c]->played) continue;
         for (int t = 0; t < task_len; t++) { // Check if this card is a task
-            if (info->hand[c]->deckid == *claimable_tasks[t]) hasTask[t] = true;
+            if (info->hand[c]->deckid == claimable_task_ids[t]) hasTask[t] = true;
         }
         if (info->hand[c]->suit < SUITS) {
             handStrength += info->hand[c]->number;
@@ -67,24 +67,24 @@ int claim_task(int *claimable_task_ids, int task_len, struct information *info) 
 
     // Calculate score
     for (int t = 0; t < task_len; t++) {
-        int TsuitIndex = (*claimable_tasks[t] / 10) - 1;
+        int TsuitIndex = (claimable_task_ids[t] / 10) - 1;
         // Bonuses
         //  -    High card of that suit
         task_scores[t] += max[TsuitIndex];
         //  -   Bot has trump, not Task suit
         if (suitCount[SUITS] > 0 && suitCount[TsuitIndex] == 0) task_scores[t] += trumpTaskBonus; // Has no cards of this suit and a trump, suitCount[SUITS] is max trump
         //  -   Task difficulty is appropriate
-        if (*claimable_tasks[t] >= difficultyCutoff && handStrength >= strengthCutoff) task_scores[t] += appropriateBonus;
+        if (claimable_task_ids[t] >= difficultyCutoff && handStrength >= strengthCutoff) task_scores[t] += appropriateBonus;
         //  -   Bot has many of that suit
         if (suitCount[TsuitIndex] > suitCutoff) task_scores[t] += suitedBonus;
 
         // Detractors
         //  -   Bot has task card
-        if (hasTask[t]) task_scores[t] -= (CARDS_PER_SUIT - (*claimable_tasks[t] % 10)); // 10 - task, ie. no penalty if it's the 9, but a huge penalty if its the 1
+        if (hasTask[t]) task_scores[t] -= (CARDS_PER_SUIT - (claimable_task_ids[t] % 10)); // 10 - task, ie. no penalty if it's the 9, but a huge penalty if its the 1
         //  -    Suit is claimed
         if (task_len > PLAYER_COUNT) task_scores[t] -= (!claimed[TsuitIndex]) * claimedBonus;
         //  -   Task difficulty is appropriate
-        if (*claimable_tasks[t] >= easeCutoff && handStrength <= weakCutoff) task_scores[t] -= appropriateBonus;
+        if (claimable_task_ids[t] >= easeCutoff && handStrength <= weakCutoff) task_scores[t] -= appropriateBonus;
     }
 
     // Calculate maximum scored task
