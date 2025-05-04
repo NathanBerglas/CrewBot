@@ -14,7 +14,7 @@
 // claim_task:
 // This function returns the index of claimable_tasks that the bot wishes to claim
 // Requirements: claim_task must return an integer t >= 0, t < task_len
-int claim_task(int **claimable_tasks, int task_len, struct information *info) {
+int claim_task(int *claimable_task_ids, int task_len, struct information *info) {
     if (task_len == 1) return 0; // In case the bot is the last to take a task
     int task_scores[TASK_COUNT] = {0};
     int handStrength = 0; // 12 is worst, 88 is best (trumpStrength = 10), 46.4 is average (7.2 5s and 0.4 Trump 2.5s + 0.4 captain strength)
